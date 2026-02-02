@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>BookForge AI — Mythic Science-Fantasy Edition</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- DOCX export library -->
+  <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.js"></script>
+
+  <!-- ============================
+       GLOBAL STYLES
+       ============================ -->
+  <style>
+    :root {
+      --bg1:#020617;
+      --bg2:#0f172a;
+      --card:rgba(15,23,42,.9);
+      --accent:#38bdf8;
+      --accent2:#a855f7;
+      --text:#e5e7eb;
+      --muted:#94a3b8;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, var(--bg2) 0, var(--bg1) 55%, #000 100%);
+      color: var(--text);
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    .container { max-width: 1200px; margin: auto; padding: 24px; }
+
+    .card {
+      background: var(--card);
+      border-radius: 22px;
+      padding: 24px;
+      box-shadow: 0 30px 80px rgba(0,0,0,.6);
+      border: 1px solid rgba(148,163,184,.25);
+    }
+
+    .grid { display: grid; gap: 20px; }
+    .grid-2 { grid-template-columns: repeat(2, 1fr); }
+    .grid-3 { grid-template-columns: repeat(3, 1fr); }
+
+    @media(max-width:900px) {
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    }    h1 { font-size: 40px; margin: 0; }
+    h2 { font-size: 28px; margin: 0 0 10px; }
+    h3 { font-size: 18px; margin: 0; }
+    p { color: var(--muted); line-height: 1.6; }
+
+    .btn {
+      padding: 14px 18px;
+      border-radius: 16px;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .btn.primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #020617;
+    }
+
+    .btn.ghost {
+      background: rgba(15,23,42,.9);
+      color: var(--text);
+      border: 1px solid #1e293b;
+    }
+
+    .btn.small { padding: 10px 12px; font-size: 13px; }
+
+    input, textarea {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 14px;
+      border: none;
+      background: #020617;
+      color: var(--text);
+      font-size: 14px;
+    }
+
+    textarea { min-height: 120px; resize: vertical; }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(2,6,23,.85);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid rgba(15,23,42,.9);
+    }
+
+    .nav { display: flex; align-items: center; gap: 14px; }
+    .nav .spacer { flex: 1; }
+
+    section { padding: 60px 0; }
+    .hero { padding: 80px 0; }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #020617;
+      border: 1px solid #1e293b;
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }    .badge-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: radial-gradient(circle, var(--accent), var(--accent2));
+    }
+
+    #auth, #app, #editor, #library { display: none; }
+
+    .row { display: flex; gap: 12px; flex-wrap: wrap; }
+
+    .output {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 16px;
+    }
+
+    @media(max-width:900px) {
+      .output { grid-template-columns: 1fr; }
+    }
+
+    pre {
+      background: #020617;
+      border-radius: 18px;
+      padding: 16px;
+      max-height: 520px;
+      overflow: auto;
+      white-space: pre-wrap;
+      font-family: ui-monospace, Menlo, Monaco, Consolas, "Courier New", monospace;
+      font-size: 13px;
+    }
+
+    canvas {
+      width: 100%;
+      border-radius: 18px;
+      background: #020617;
+    }
+
+    .book {
+      background: #020617;
+      border-radius: 16px;
+      padding: 14px;
+      margin-bottom: 10px;
+      border: 1px solid rgba(30,64,175,.6);
+    }
+
+    .tier { font-size: 13px; color: var(--muted); }
+
+    .pill {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(15,23,42,.9);
+      border: 1px solid rgba(148,163,184,.3);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--muted);
+    }    /* LOGIN UI UPGRADE */
+    .auth-card {
+      max-width: 420px;
+      margin: auto;
+      padding: 40px;
+      border-radius: 24px;
+      background: rgba(15,23,42,0.85);
+      backdrop-filter: blur(12px);
+    }
+
+    .auth-header h2 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    .auth-sub {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .auth-fields {
+      margin-top: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .auth-fields label {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .auth-error {
+      margin: 0;
+      font-size: 12px;
+      color: #f87171;
+      height: 14px;
+    }
+
+    .auth-btn {
+      width: 100%;
+      margin-top: 24px;
+      padding: 14px;
+      font-size: 15px;
+    }
+
+    .input-error {
+      border: 1px solid #f87171 !important;
+    }
+
+    .auth-footer {
+      margin-top: 18px;
+      font-size: 12px;
+      color: var(--muted);
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body>  <!-- NAVIGATION -->
+  <header>
+    <div class="container nav">
+      <strong>📘 BookForge AI</strong>
+      <span class="pill">Mythic Science‑Fantasy • Groq llama3‑70b</span>
+      <span class="spacer"></span>
+      <a href="#pricing" class="btn ghost small">Pricing</a>
+      <button class="btn primary small" onclick="openAuth()">Get Started</button>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="container grid grid-2">
+      <div>
+        <span class="badge">
+          <span class="badge-dot"></span>
+          High‑concept mythic science‑fantasy engine
+        </span>
+
+        <h1>Forge entire universes, one chapter at a time.</h1>
+
+        <p>
+          Generate long‑form books in a high‑concept mythic science‑fantasy style:
+          ancient cosmic mysteries, deep emotional arcs, and grounded, character‑driven
+          narratives — all powered by Groq’s llama3‑70b.
+        </p>
+
+        <div class="row">
+          <button class="btn primary" onclick="openAuth()">Start Writing</button>
+          <a href="#pricing" class="btn ghost">View Pricing</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>What this engine is tuned for</h3>
+        <p>
+          • Ancient civilizations and lost technologies<br>
+          • Mythic powers with rules and consequences<br>
+          • Characters who break, grow, and choose<br>
+          • Slow‑burn mysteries with cosmic stakes<br>
+          • Cinematic, novel‑like pacing and detail
+        </p>
+      </div>
+    </div>
+  </section>  <!-- PRICING -->
+  <section id="pricing">
+    <div class="container">
+      <h2>Simple “pricing”</h2>
+      <p>Groq is free. The only limit is your API quota and your ambition.</p>
+
+      <div class="grid grid-3">
+        <div class="card">
+          <h3>Apprentice</h3>
+          <p>Experiment & explore</p>
+          <p>Up to 3 chapters • Short tests</p>
+          <button class="btn ghost" onclick="openAuth()">Use</button>
+        </div>
+
+        <div class="card">
+          <h3>Author</h3>
+          <p>Serious drafting</p>
+          <p>Up to 30 chapters • DOCX export</p>
+          <button class="btn primary" onclick="openAuth()">Use</button>
+        </div>
+
+        <div class="card">
+          <h3>Forge Master</h3>
+          <p>Series & sagas</p>
+          <p>Up to 100 chapters • Long chapters • Library</p>
+          <button class="btn primary" onclick="openAuth()">Use</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- AUTH -->
+  <section>
+    <div class="container">
+		<div id="auth" class="card auth-card">
+			<div class="auth-header">
+				<h2>Sign in to BookForge</h2>
+				<p class="auth-sub">Your stories, saved securely in your browser.</p>
+			</div>
+
+			<div class="auth-fields">
+				<label>Email</label>
+				<input id="email" type="email" placeholder="you@example.com" />
+				<p id="email-error" class="auth-error"></p>
+
+				<label>Password</label>
+				<input id="password" type="password" placeholder="Enter your password" />
+				<p id="password-error" class="auth-error"></p>
+			</div>
+
+			<button class="btn primary auth-btn" id="auth-btn" onclick="login()">Continue</button>
+
+			<p class="auth-footer">No account is created — everything stays on your device.</p>
+		</div>
+    </div>
+  </section>
+
+  <!-- APP (EDITOR + LIBRARY) -->
+  <section>
+    <div class="container">
+      <div id="app">
+        <div class="row">
+          <span class="tier" id="tier"></span>
+          <span class="spacer"></span>
+          <button class="btn ghost small" onclick="showLibrary()">Library</button>
+          <button class="btn primary small" onclick="newBook()">New Book</button>
+        </div>        <!-- EDITOR -->
+        <div id="editor" class="card">
+          <h2>Editor</h2>
+
+          <input id="title" placeholder="Book title (e.g. 'Stars Beneath the Ruined Sky')" />
+
+          <textarea id="prompt" placeholder="Describe the world, tone, key characters, and themes. The engine is tuned for high‑concept mythic science‑fantasy with deep emotional arcs and ancient cosmic mysteries."></textarea>
+
+          <div class="row">
+            <input id="chapters" type="number" max="100" placeholder="Chapters (e.g. 5)" />
+            <input id="words" type="number" max="7000" placeholder="Words / chapter (e.g. 1500)" />
+          </div>
+
+          <div class="row">
+            <button class="btn primary" onclick="generateBook()">Generate</button>
+            <button class="btn ghost" onclick="exportDocx()">Export DOCX</button>
+          </div>
+
+          <div class="output">
+            <pre id="output"></pre>
+            <canvas id="cover" width="512" height="768"></canvas>
+          </div>
+        </div>
+
+        <!-- LIBRARY -->
+        <div id="library" class="card"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================
+       JAVASCRIPT
+       ============================ -->
+  <script>
+    /* CONFIG */
+    const GROQ_API_KEY = "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";
+    const GROQ_ENDPOINT = "https://api.groq.com/openai/v1/chat/completions";
+    const GROQ_MODEL = "llama-3.3-70b-versatile";
+
+    /* STATE */
+    let user = null;
+    let tier = "Free";    
+	/* AUTH */
+    function openAuth() {
+      document.getElementById("auth").style.display = "block";
+      document.getElementById("app").style.display = "none";
+    }
+
+    function login() {
+		const email = document.getElementById("email");
+		const password = document.getElementById("password");
+		const emailError = document.getElementById("email-error");
+		const passwordError = document.getElementById("password-error");
+		const button = document.getElementById("auth-btn");
+
+		let valid = true;
+
+		// Reset errors
+		emailError.textContent = "";
+		passwordError.textContent = "";
+		email.classList.remove("input-error");
+		password.classList.remove("input-error");
+
+		// Email validation
+		if (!email.value.trim()) {
+			emailError.textContent = "Email is required.";
+			email.classList.add("input-error");
+			valid = false;
+		} else if (!email.value.includes("@") || !email.value.includes(".")) {
+			emailError.textContent = "Enter a valid email address.";
+			email.classList.add("input-error");
+			valid = false;
+		}
+
+		// Password validation
+		if (!password.value.trim()) {
+			passwordError.textContent = "Password is required.";
+			password.classList.add("input-error");
+			valid = false;
+		} else if (password.value.length < 4 && password.value !== "DEV-9999") {
+			passwordError.textContent = "Password must be at least 4 characters.";
+			password.classList.add("input-error");
+			valid = false;
+		}
+
+		if (!valid) return;
+
+		// Loading state
+		button.textContent = "Signing in…";
+		button.disabled = true;
+
+		setTimeout(() => {
+			// DEV unlock
+			if (password.value.trim() === "DEV-9999") {
+				tier = "Forge Master";
+			}
+
+			user = email.value.trim();
+			document.getElementById("tier").textContent = "Tier: " + tier;
+
+			document.getElementById("auth").style.display = "none";
+			document.getElementById("app").style.display = "block";
+
+			showLibrary();
+
+			button.textContent = "Continue";
+			button.disabled = false;
+		}, 600);
+	}
+
+    /* LIBRARY */
+    function getLibrary() {
+      if (!user) return [];
+      try {
+        return JSON.parse(localStorage.getItem("bookforge_" + user) || "[]");
+      } catch {
+        return [];
+      }
+    }
+
+    function saveLibrary(lib) {
+      if (!user) return;
+      localStorage.setItem("bookforge_" + user, JSON.stringify(lib));
+    }
+
+    function showLibrary() {
+      const editor = document.getElementById("editor");
+      const library = document.getElementById("library");
+
+      editor.style.display = "none";
+      library.style.display = "block";
+
+      library.innerHTML = "<h2>Your Library</h2>";
+
+      const lib = getLibrary();
+      if (!lib.length) {
+        library.innerHTML += "<p>No books yet.</p>";
+        return;
+      }
+
+      lib.forEach(b => {
+        const d = document.createElement("div");
+        d.className = "book";
+        d.innerHTML = `
+          <strong>${escapeHtml(b.title)}</strong><br>
+          <button class="btn ghost small" onclick="openBook('${b.id}')">Open</button>
+          <button class="btn ghost small" onclick="newBook('${escapeQuotes(b.title)}')">Create Book 2</button>
+        `;
+        library.appendChild(d);
+      });
+    }    function openBook(id) {
+      const lib = getLibrary();
+      const book = lib.find(b => String(b.id) === String(id));
+      if (!book) return;
+
+      const editor = document.getElementById("editor");
+      const library = document.getElementById("library");
+
+      editor.style.display = "block";
+      library.style.display = "none";
+
+      document.getElementById("title").value = book.title;
+      document.getElementById("prompt").value = "";
+      document.getElementById("chapters").value = "";
+      document.getElementById("words").value = "";
+      document.getElementById("output").textContent = book.content || "";
+
+      editor.dataset.bookId = book.id;
+
+      generateCover();
+    }
+
+    function newBook(parentTitle = null) {
+      const editor = document.getElementById("editor");
+      const library = document.getElementById("library");
+
+      editor.style.display = "block";
+      library.style.display = "none";
+
+      document.getElementById("title").value = parentTitle ? parentTitle + " 2" : "";
+      document.getElementById("prompt").value = "";
+      document.getElementById("chapters").value = "";
+      document.getElementById("words").value = "";
+      document.getElementById("output").textContent = "";
+
+      editor.dataset.bookId = "";
+
+      generateCover();
+    }
+
+    function autosave(book) {
+      let lib = getLibrary();
+
+      if (!book.id) {
+        book.id = Date.now().toString();
+      }
+
+      lib = lib.filter(b => b.id !== book.id);
+      lib.push(book);
+
+      saveLibrary(lib);
+    }
+
+    /* GROQ CALL */
+    async function callGroq(prompt) {
+      if (!GROQ_API_KEY || GROQ_API_KEY === "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") {
+        throw new Error("Please set your Groq API key in the source code.");
+      }
+
+      const body = {
+        model: GROQ_MODEL,
+        messages: [{ role: "user", content: prompt }]
+      };
+
+      const res = await fetch(GROQ_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Authorization": "Bearer " + GROQ_API_KEY,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(body)
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error("Groq error: " + res.status + " " + text);
+      }
+
+      const data = await res.json();
+      const content = data.choices?.[0]?.message?.content || "";
+      return content;
+    }
+
+    function withTimeout(ms, promise) {
+      return new Promise((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error("Request timed out")), ms);
+        promise.then(v => {
+          clearTimeout(timer);
+          resolve(v);
+        }).catch(err => {
+          clearTimeout(timer);
+          reject(err);
+        });
+      });
+    }    /* BOOK GENERATION */
+    async function generateBook() {
+      const titleInput = document.getElementById("title");
+      const promptInput = document.getElementById("prompt");
+      const chaptersInput = document.getElementById("chapters");
+      const wordsInput = document.getElementById("words");
+      const output = document.getElementById("output");
+      const editor = document.getElementById("editor");
+
+      const bookTitle = (titleInput.value || "Untitled Book").trim();
+      const userPrompt = (promptInput.value || "").trim();
+      const totalChapters = parseInt(chaptersInput.value || "1", 10);
+      const wordsPerChapter = parseInt(wordsInput.value || "1500", 10);
+
+      if (!bookTitle) {
+        alert("Please enter a book title.");
+        return;
+      }
+      if (!totalChapters || totalChapters < 1) {
+        alert("Please enter a valid number of chapters.");
+        return;
+      }
+
+      let book = {
+        id: editor.dataset.bookId || Date.now().toString(),
+        title: bookTitle,
+        content: "",
+        parent: null
+      };
+
+      output.textContent = "Generating with Groq llama3‑70b…\n";
+      generateCover();
+
+      for (let i = 1; i <= totalChapters; i++) {
+        output.textContent += `\n\n[Generating chapter ${i} of ${totalChapters}…]\n`;
+
+        const chapterPrompt =
+          `Write chapter ${i} of a book titled "${bookTitle}" in a high-concept mythic science-fantasy style with deep emotional arcs, ancient cosmic mysteries, and a grounded, character-driven narrative. ` +
+          (userPrompt ? userPrompt + " " : "") +
+          `The chapter should be about ${wordsPerChapter} words. ` +
+          `Use vivid imagery, strong atmosphere, and coherent, novel-like pacing. Maintain continuity with previous chapters, assuming an ongoing story.`;
+
+        try {
+          const chapterText = await withTimeout(60000, callGroq(chapterPrompt));
+          book.content += `\n\nChapter ${i}\n${chapterText}`;
+          output.textContent = book.content;
+          autosave(book);
+        } catch (err) {
+          console.error(err);
+          output.textContent += `\n[Error generating chapter ${i}: ${err.message}]\n`;
+          break;
+        }
+      }
+
+      editor.dataset.bookId = book.id;
+      autosave(book);
+      generateCover();
+    }
+
+    /* DOCX EXPORT */
+    function exportDocx() {
+      const output = document.getElementById("output");
+      const titleInput = document.getElementById("title");
+
+      const doc = new window.docx.Document({
+        sections: [
+          {
+            children: [
+              new window.docx.Paragraph({
+                text: titleInput.value || "BookForge Book",
+                heading: window.docx.HeadingLevel.TITLE
+              }),
+              new window.docx.Paragraph(output.textContent || "")
+            ]
+          }
+        ]
+      });
+
+      window.docx.Packer.toBlob(doc).then(blob => {
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = (titleInput.value || "BookForge") + ".docx";
+        a.click();
+      });
+    }    /* COVER */
+    function generateCover() {
+      const canvas = document.querySelector("canvas#cover");
+      if (!canvas) return;
+      const ctx = canvas.getContext("2d");
+      const titleInput = document.getElementById("title");
+      const title = titleInput.value || "BookForge AI";
+
+      const w = canvas.width;
+      const h = canvas.height;
+
+      const gradient = ctx.createLinearGradient(0, 0, w, h);
+      gradient.addColorStop(0, "#020617");
+      gradient.addColorStop(0.4, "#0f172a");
+      gradient.addColorStop(1, "#020617");
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, w, h);
+
+      const stripeGrad = ctx.createLinearGradient(0, h * 0.65, w, h);
+      stripeGrad.addColorStop(0, "#38bdf8");
+      stripeGrad.addColorStop(1, "#a855f7");
+      ctx.fillStyle = stripeGrad;
+      ctx.fillRect(0, h * 0.68, w, h * 0.32);
+
+      ctx.fillStyle = "rgba(148,163,184,0.35)";
+      for (let i = 0; i < 40; i++) {
+        const x = Math.random() * w;
+        const y = Math.random() * h * 0.6;
+        const r = Math.random() * 1.4 + 0.4;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.fillStyle = "#e5e7eb";
+      ctx.font = "bold 40px serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+
+      wrapText(ctx, title, w / 2, h * 0.32, w * 0.8, 44);
+    }
+
+    function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+      const words = text.split(" ");
+      let line = "";
+      const lines = [];
+
+      for (let n = 0; n < words.length; n++) {
+        const testLine = line + words[n] + " ";
+        const metrics = ctx.measureText(testLine);
+        const testWidth = metrics.width;
+        if (testWidth > maxWidth && n > 0) {
+          lines.push(line);
+          line = words[n] + " ";
+        } else {
+          line = testLine;
+        }
+      }
+      lines.push(line);
+
+      const totalHeight = lines.length * lineHeight;
+      let startY = y - totalHeight / 2;
+
+      lines.forEach(l => {
+        ctx.fillText(l.trim(), x, startY);
+        startY += lineHeight;
+      });
+    }
+
+    /* UTILS */
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function escapeQuotes(str) {
+      return String(str).replace(/'/g, "\\'");
+    }
+
+    /* INIT */
+    document.addEventListener("DOMContentLoaded", () => {
+      openAuth();
+      generateCover();
+    });
+  </script>
+</body>
+</html>
